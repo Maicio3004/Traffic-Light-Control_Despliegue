@@ -1,0 +1,6 @@
+[submodule "Traffic-Light-Control_Backend"]
+	path = Traffic-Light-Control_Backend
+	url = https://github.com/Maicio3004/Traffic-Light-Control_Backend.git
+[submodule "TrafficLight-Control-Frontend"]
+	path = TrafficLight-Control-Frontend
+	url = https://github.com/ValeriaBarreto/TrafficLight-Control-Frontend.git

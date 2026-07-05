@@ -36,6 +36,29 @@ services:
     networks:
       - iot_campus_uis
   
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DEFAULT}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    # Healthcheck más tolerante (temporalmente)
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 30s
+    networks:
+      - iot_campus_uis
+
   mongodb:
     image: mongo
     restart: always
@@ -196,6 +219,59 @@ services:
       - iot_campus_uis
     depends_on:
       - influxdb
+
+  front:
+    build: 
+      context: TrafficLight-Control-Frontend
+      args: 
+        - VITE_API_URL=${VITE_API_URL}
+    container_name: traffic_front
+    ports:
+      - "3002:80"
+    env_file:
+      .env
+    depends_on:
+      - backend
+    networks:
+      - iot_campus_uis
+
+  backend:
+    build: Traffic-Light-Control_Backend
+    container_name: traffic_backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT}:8081"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DEFAULT: ${DB_DEFAULT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      
+      # MQTT (por ahora en localhost, luego puedes agregar Mosquitto)
+      MQTT_BROKER_URL: ${MQTT_BROKER_URL}
+      MQTT_CLIENT_ID: ${MQTT_CLIENT_ID}
+      MQTT_USERNAME: ${MQTT_USERNAME}
+      MQTT_PASSWORD: ${MQTT_PASSWORD}
+      
+      # Topics
+      INBOUND_COLOR_TOPIC: ${INBOUND_COLOR_TOPIC}
+      INBOUND_STATUS_TOPIC: ${INBOUND_STATUS_TOPIC}
+      OUTBOUND_ACTIVATE_TOPIC: ${OUTBOUND_ACTIVATE_TOPIC}
+      
+      # Google Maps
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+      GOOGLE_MAPS_BASE_URL: ${GOOGLE_MAPS_BASE_URL}
+    env_file:
+      - .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - iot_campus_uis
+
+volumes:
+  mysql_data:
 
 networks: 
   iot_campus_uis:
