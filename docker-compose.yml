@@ -218,6 +218,7 @@ services:
       # Google Maps
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
       GOOGLE_MAPS_BASE_URL: ${GOOGLE_MAPS_BASE_URL}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
     env_file:
       - .env
     depends_on:
